@@ -1,36 +1,40 @@
 <?php
-$servername = "localhost";
-$username = "root"; // database username
-$password = ""; // database password
-$dbname ="fintech-tourism";
+header("Content-Type: application/json");
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+require_once("../includes/db_connect.php"); // adjust path if needed
 
-// Check connection
-if ($conn->connect_error) {
-    die(json_encode(["status" => "error", "message" => "Database connection failed: " . $conn->connect_error]));
+// Get raw POST data
+$input = file_get_contents("php://input");
+$data = json_decode($input, true);
+
+if (!$data) {
+    echo json_encode(["status" => "error", "message" => "Invalid JSON input"]);
+    exit;
 }
 
-// Get POST data
-$data = json_decode(file_get_contents("php://input"), true);
+$name = $data['name'] ?? '';
+$email = $data['email'] ?? '';
+$interest = $data['interest'] ?? '';
+$dream = $data['dream'] ?? '';
 
-$name = $data['name'];
-$email = $data['email'];
-$interest = $data['interest'];
-$dream = $data['dream'];
-$timestamp = $data['timestamp'];
+if (empty($name) || empty($email)) {
+    echo json_encode(["status" => "error", "message" => "Name and email are required"]);
+    exit;
+}
 
-// Prepare SQL
-$stmt = $conn->prepare("INSERT INTO waitlist (name, email, interest, dream, timestamp) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("sssss", $name, $email, $interest, $dream, $timestamp);
-
-if ($stmt->execute()) {
-    echo json_encode(["status" => "success", "message" => "Saved successfully!"]);
+// Prepare and insert into database
+$stmt = $conn->prepare("INSERT INTO waitlist (name, email, interest, dream) VALUES (?, ?, ?, ?)");
+if ($stmt) {
+    $stmt->bind_param("ssss", $name, $email, $interest, $dream);
+    if ($stmt->execute()) {
+        echo json_encode(["status" => "success", "message" => "Added to waitlist"]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Database insert failed"]);
+    }
+    $stmt->close();
 } else {
-    echo json_encode(["status" => "error", "message" => "Save failed."]);
+    echo json_encode(["status" => "error", "message" => "SQL prepare failed"]);
 }
 
-$stmt->close();
 $conn->close();
 ?>

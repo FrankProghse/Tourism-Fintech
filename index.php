@@ -1,3 +1,11 @@
+<?php
+ session_start();
+
+require_once("../includes/db_connect.php");
+
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -247,6 +255,7 @@
             }
         }
     </style>
+
 </head>
 <body>
     <!-- Hero Section -->
@@ -531,7 +540,7 @@
             // For now, we'll store in localStorage and show success message
             saveWaitlistEntry(formData);
             
-            fetch('save_waitlist.php', {
+            fetch('../save_waitlist.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(formData)
